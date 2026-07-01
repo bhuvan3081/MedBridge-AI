@@ -1,5 +1,7 @@
 # 🏥 MedBridge AI — Personal Medical Report Analyzer & Health Tracker
 
+![MedBridge AI Demo Screenshot](demo_screenshot.png)
+
 MedBridge AI is a state-of-the-art, client-side web application designed to empower patients by breaking down complex medical laboratory reports into clear, understandable, and actionable insights. Built with a multilingual focus supporting **7 languages**, it serves as a bridge between professional lab data and personal health management.
 
 ---
