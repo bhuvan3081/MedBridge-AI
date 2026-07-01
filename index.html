@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedBridge AI - Personal Medical Report Analyzer</title>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- ChartJS for trends -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- 1. Simulated Authentication Overlay -->
+  <div id="auth-overlay">
+    <!-- Login Card -->
+    <div class="auth-card" id="login-card">
+      <div class="auth-header">
+        <div class="auth-logo"><i class="fa-solid fa-heart-pulse"></i> MedBridge AI</div>
+        <div class="auth-subtitle" id="login-subtitle">Log in to manage your medical history & profiles</div>
+      </div>
+      <form class="auth-form" id="login-form">
+        <div class="form-group">
+          <label for="login-email" id="lbl-login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-control" placeholder="patient@health.com" required value="jane.doe@example.com">
+        </div>
+        <div class="form-group">
+          <label for="login-password" id="lbl-login-pass">Password</label>
+          <input type="password" id="login-password" class="form-control" placeholder="••••••••" required value="password123">
+        </div>
+        <button type="submit" class="auth-btn" id="btn-login-submit">Sign In</button>
+      </form>
+      <div class="auth-footer">
+        <span id="txt-no-account">Don't have an account?</span> 
+        <span class="auth-toggle-link" onclick="toggleAuth(true)" id="link-goto-register">Create one here</span>
+      </div>
+    </div>
+
+    <!-- Register Card -->
+    <div class="auth-card" id="register-card" style="display: none;">
+      <div class="auth-header">
+        <div class="auth-logo"><i class="fa-solid fa-heart-pulse"></i> MedBridge AI</div>
+        <div class="auth-subtitle" id="register-subtitle">Sign up to analyze and track your health values</div>
+      </div>
+      <form class="auth-form" id="register-form">
+        <div class="auth-row">
+          <div class="form-group">
+            <label for="reg-name" id="lbl-reg-name">Full Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="Jane Doe" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-email" id="lbl-reg-email">Email</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="jane@example.com" required>
+          </div>
+        </div>
+        <div class="auth-row">
+          <div class="form-group">
+            <label for="reg-password" id="lbl-reg-pass">Password</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-age" id="lbl-reg-age">Age</label>
+            <input type="number" id="reg-age" class="form-control" placeholder="32" required min="1" max="120">
+          </div>
+        </div>
+        <div class="auth-row">
+          <div class="form-group">
+            <label for="reg-gender" id="lbl-reg-gender">Gender</label>
+            <select id="reg-gender" class="form-control" style="background: #0a0f1a;">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="reg-blood" id="lbl-reg-blood">Blood Type</label>
+            <input type="text" id="reg-blood" class="form-control" placeholder="O+">
+          </div>
+        </div>
+        <button type="submit" class="auth-btn" id="btn-register-submit">Register & Login</button>
+      </form>
+      <div class="auth-footer">
+        <span id="txt-have-account">Already have an account?</span> 
+        <span class="auth-toggle-link" onclick="toggleAuth(false)" id="link-goto-login">Sign in here</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Sidebar Navigation -->
+  <aside id="sidebar">
+    <div class="logo-container">
+      <div class="logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div class="logo-text">MedBridge AI</div>
+      <button class="sidebar-toggle" onclick="toggleSidebarMenu()" id="btn-sidebar-toggle">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+    
+    <ul class="menu-list" id="sidebar-menu">
+      <li>
+        <a class="menu-item active" onclick="switchScreen('dashboard')" id="nav-dashboard">
+          <i class="fa-solid fa-chart-pie"></i> 
+          <span class="nav-text" 
+                data-en="Dashboard" 
+                data-es="Tablero" 
+                data-fr="Tableau de bord" 
+                data-ar="لوحة التحكم" 
+                data-hi="डैशबोर्ड" 
+                data-te="డ్యాష్‌బోర్డ్" 
+                data-ta="டாஷ்போர்டு">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" onclick="switchScreen('analyzer')" id="nav-analyzer">
+          <i class="fa-solid fa-microscope"></i> 
+          <span class="nav-text" 
+                data-en="Report Analyzer" 
+                data-es="Analizador" 
+                data-fr="Analyseur" 
+                data-ar="محلل التقارير" 
+                data-hi="रिपोर्ट विश्लेषक" 
+                data-te="రిపోర్ట్ విశ్లేషణ" 
+                data-ta="அறிக்கை பகுப்பாய்வி">Report Analyzer</span>
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" onclick="switchScreen('trends')" id="nav-trends">
+          <i class="fa-solid fa-chart-line"></i> 
+          <span class="nav-text" 
+                data-en="Health Trends" 
+                data-es="Tendencias" 
+                data-fr="Tendances" 
+                data-ar="اتجاهات الصحة" 
+                data-hi="स्वास्थ्य रुझान" 
+                data-te="ఆరోగ్య పోకడలు" 
+                data-ta="சுகாதார போக்குகள்">Health Trends</span>
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" onclick="switchScreen('profiles')" id="nav-profiles">
+          <i class="fa-solid fa-user-group"></i> 
+          <span class="nav-text" 
+                data-en="Patient Profiles" 
+                data-es="Perfiles" 
+                data-fr="Profils" 
+                data-ar="ملفات المرضى" 
+                data-hi="रोगी प्रोफाइल" 
+                data-te="రోగుల ప్రొఫైల్స్" 
+                data-ta="நோயாளி விவரங்கள்">Patient Profiles</span>
+        </a>
+      </li>
+      <li>
+        <a class="menu-item" onclick="switchScreen('chat')" id="nav-chat">
+          <i class="fa-solid fa-user-doctor"></i> 
+          <span class="nav-text" 
+                data-en="AI Consultation" 
+                data-es="Consulta AI" 
+                data-fr="Consultation IA" 
+                data-ar="الاستشارة الذكية" 
+                data-hi="एआई परामर्श" 
+                data-te="AI సంప్రదింపులు" 
+                data-ta="AI ஆலோசனை">AI Consultation</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="user-profile-section" id="user-profile-widget">
+      <div class="user-avatar" id="widget-avatar">U</div>
+      <div class="user-info">
+        <span class="user-name" id="widget-username">User</span>
+        <span class="user-role" id="widget-email">user@health.com</span>
+      </div>
+      <button class="logout-btn" onclick="logoutUser()" title="Sign Out" id="btn-logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- 3. Main Dashboard Pane -->
+  <main id="main-content">
+    
+    <!-- Top Action Bar -->
+    <header class="dashboard-header">
+      <div class="welcome-title">
+        <h1 id="welcome-message">Hello!</h1>
+        <p id="welcome-sub">Welcome back to your personalized health portal.</p>
+      </div>
+      <div class="header-controls">
+        <!-- Profile Dropdown Picker -->
+        <div class="select-wrapper">
+          <select id="profile-picker" class="profile-select" onchange="changeProfile(this.value)">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+        <!-- Language Switcher Dropdown -->
+        <div class="select-wrapper">
+          <select id="lang-picker" class="profile-select" onchange="setLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="es">Español (Spanish)</option>
+            <option value="fr">Français (French)</option>
+            <option value="ar">العربية (Arabic)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- App Screens -->
+
+    <!-- SCREEN A: DASHBOARD -->
+    <section id="screen-dashboard" class="app-screen active">
+      <!-- Widgets -->
+      <div class="dashboard-grid">
+        <!-- Reports count -->
+        <div class="widget-card">
+          <div class="widget-header">
+            <span class="widget-title" 
+                  data-en="Saved Reports" 
+                  data-es="Reportes Guardados" 
+                  data-fr="Rapports Sauvegardés" 
+                  data-ar="التقارير المحفوظة" 
+                  data-hi="सहेजी गई रिपोर्ट" 
+                  data-te="భద్రపరిచిన నివేదికలు" 
+                  data-ta="சேமிக்கப்பட்ட அறிக்கைகள்">Saved Reports</span>
+            <div class="widget-icon"><i class="fa-solid fa-file-medical"></i></div>
+          </div>
+          <span class="widget-value" id="dash-reports-count">0</span>
+          <div class="widget-footer" id="dash-reports-footer">No reports analyzed yet.</div>
+        </div>
+        <!-- Active alert status -->
+        <div class="widget-card">
+          <div class="widget-header">
+            <span class="widget-title" 
+                  data-en="Health Alerts" 
+                  data-es="Alertas de Salud" 
+                  data-fr="Alertes de Santé" 
+                  data-ar="تنبيهات الصحة" 
+                  data-hi="स्वास्थ्य चेतावनियाँ" 
+                  data-te="ఆరోగ్య హెచ్చరికలు" 
+                  data-ta="சுகாதார எச்சரிக்கைகள்">Health Alerts</span>
+            <div class="widget-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          </div>
+          <span class="widget-value" id="dash-alerts-count">0</span>
+          <div class="widget-footer" id="dash-alerts-footer">All metrics are in normal thresholds.</div>
+        </div>
+        <!-- Daily Goal checklist progression -->
+        <div class="widget-card">
+          <div class="widget-header">
+            <span class="widget-title" 
+                  data-en="Action Plan Progress" 
+                  data-es="Progreso del Plan" 
+                  data-fr="Progrès du Plan d'Action" 
+                  data-ar="تقدم خطة العمل" 
+                  data-hi="कार्य योजना प्रगति" 
+                  data-te="కార్యచరణ పురోగతి" 
+                  data-ta="செயல்பாட்டு திட்ட முன்னேற்றம்">Action Plan Progress</span>
+            <div class="widget-icon"><i class="fa-solid fa-heart-circle-check"></i></div>
+          </div>
+          <span class="widget-value" id="dash-goals-percent">0%</span>
+          <div class="widget-footer" id="dash-goals-footer">Check off habits on your active plan.</div>
+        </div>
+      </div>
+
+      <!-- Quick Summary / Activity List -->
+      <div class="analysis-layout">
+        <div class="analysis-results-card" style="min-height: 250px;">
+          <h2 class="section-subtitle" 
+              data-en="Recent Diagnostics History" 
+              data-es="Historial de Diagnósticos Recientes" 
+              data-fr="Historique des Diagnostics" 
+              data-ar="سجل التشخيصات الحديثة" 
+              data-hi="हालिया नैदानिक इतिहास" 
+              data-te="ఇటీవలి ఆరోగ్య చరిత్ర" 
+              data-ta="சமீபத்திய மருத்துவ வரலாறு">Recent Diagnostics History</h2>
+          <div class="logs-list" id="dashboard-recent-list" style="max-height: none;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+        <!-- Profile info pane -->
+        <div class="habits-card">
+          <h2 class="section-subtitle" 
+              data-en="Patient Card" 
+              data-es="Ficha de Paciente" 
+              data-fr="Carte Patient" 
+              data-ar="بطاقة المريض" 
+              data-hi="रोगी कार्ड" 
+              data-te="రోగి కార్డ్" 
+              data-ta="நோயாளி அட்டை">Patient Card</h2>
+          <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+              <span style="color: var(--text-secondary);" data-en="Name" data-es="Nombre" data-fr="Nom" data-ar="الاسم" data-hi="नाम" data-te="పేరు" data-ta="பெயர்">Name</span>
+              <strong id="dash-patient-name">--</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+              <span style="color: var(--text-secondary);" data-en="Age" data-es="Edad" data-fr="Âge" data-ar="العمر" data-hi="उम्र" data-te="వయస్సు" data-ta="வயது">Age</span>
+              <strong id="dash-patient-age">--</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+              <span style="color: var(--text-secondary);" data-en="Gender" data-es="Género" data-fr="Genre" data-ar="الجنس" data-hi="लिंग" data-te="లింగము" data-ta="பாலினம்">Gender</span>
+              <strong id="dash-patient-gender">--</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+              <span style="color: var(--text-secondary);" data-en="Blood Type" data-es="Grupo Sanguíneo" data-fr="Groupe Sanguin" data-ar="فصيلة الدم" data-hi="रक्त समूह" data-te="రక్త గ్రూపు" data-ta="இரத்த வகை">Blood Type</span>
+              <strong id="dash-patient-blood">--</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN B: REPORT ANALYZER -->
+    <section id="screen-analyzer" class="app-screen">
+      <div class="welcome-title">
+        <h2 class="section-subtitle" 
+            data-en="Upload Medical Document" 
+            data-es="Subir Documento Médico" 
+            data-fr="Téléverser un document" 
+            data-ar="رفع مستند طبي" 
+            data-hi="चिकित्सा दस्तावेज अपलोड करें" 
+            data-te="ఆరోగ్య పత్రాలను అప్‌లోడ్ చేయండి" 
+            data-ta="மருத்துவ ஆவணத்தைப் பதிவேற்றவும்">Upload Medical Document</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;" 
+           data-en="Drag & drop or paste your blood tests, lab results, or imaging scans to run the AI analyzer." 
+           data-es="Arrastre o pegue sus análisis de sangre o radiografías para iniciar el análisis con inteligencia artificial."
+           data-fr="Glissez-déposez ou collez vos analyses de sang pour lancer l'analyseur IA."
+           data-ar="اسحب وأسقط أو الصق نتائج اختبارات الدم أو الأشعة السينية لتشغيل محلل الذكاء الاصطناعي."
+           data-hi="एआई विश्लेषक चलाने के लिए अपने रक्त परीक्षण, प्रयोगशाला परिणाम या स्कैन कॉपी खींचें और छोड़ें या पेस्ट करें।"
+           data-te="AI విశ్లేషణను ప్రారంభించడానికి మీ రక్త పరీక్షలు లేదా ల్యాబ్ నివేదికలను లాగి వదలండి లేదా పేస్ట్ చేయండి."
+           data-ta="AI பகுப்பாய்வியை இயக்க உங்கள் இரத்த பரிசோதனைகள் அல்லது ஆய்வக முடிவுகளை இழுத்து விடவும் அல்லது ஒட்டவும்.">Drag & drop or paste your blood tests, lab results, or imaging scans to run the AI analyzer.</p>
+      </div>
+
+      <!-- Drag & Drop Uploader -->
+      <div class="upload-container" onclick="triggerFileInput()" id="drop-zone">
+        <div class="upload-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+        <div class="upload-title" 
+             data-en="Drag medical report here, or Browse files" 
+             data-es="Arrastre su reporte médico aquí, o examine archivos"
+             data-fr="Glissez le rapport ici, ou parcourez les fichiers"
+             data-ar="اسحب التقرير الطبي هنا، أو تصفح الملفات"
+             data-hi="चिकित्सा रिपोर्ट यहाँ खींचें, या फ़ाइलें ब्राउज़ करें"
+             data-te="వైద్య నివేదికను ఇక్కడ లాగండి లేదా ఫైల్‌లను బ్రౌజ్ చేయండి"
+             data-ta="மருத்துவ அறிக்கையை இங்கே இழுக்கவும், அல்லது கோப்புகளைத் தேடவும்">Drag medical report here, or Browse files</div>
+        <div class="upload-desc" 
+             data-en="Supports PDF, JPEG, PNG scan copies. We maintain end-to-end data encryption." 
+             data-es="Soporta formatos PDF, JPEG, PNG. Mantenemos encriptación de datos de extremo a extremo."
+             data-fr="Prend en charge les formats PDF, JPEG, PNG. Cryptage des données de bout en bout."
+             data-ar="يدعم ملفات PDF وJPEG وPNG. نحافظ على تشفير البيانات بالكامل."
+             data-hi="पीडीएफ, जेपीईजी, पीएनजी स्कैन प्रतियों का समर्थन करता है। हम डेटा एन्क्रिप्शन बनाए रखते हैं।"
+             ve-te="PDF, JPEG, PNG ఫైళ్లను సపోర్ట్ చేస్తుంది. డేటా ఎన్‌క్రిప్షన్ నిర్వహించబడుతుంది."
+             data-ta="PDF, JPEG, PNG கோப்புகளை ஆதரிக்கிறது. தரவு குறியாக்கம் பராமரிக்கப்படுகிறது.">Supports PDF, JPEG, PNG scan copies. We maintain end-to-end data encryption.</div>
+        <input type="file" id="file-input" class="hidden-file-input" onchange="handleFileSelected(event)">
+        
+        <!-- Laser Scanner Visual Simulation Overlay -->
+        <div class="scanner-overlay" id="scanner-overlay-view">
+          <div class="scanning-spinner"></div>
+          <div class="scanner-laser"></div>
+          <h3 style="font-weight: 700;" 
+              data-en="Digitizing and Parsing Report Data..." 
+              data-es="Digitalizando y Analizando Datos del Reporte..."
+              data-fr="Numérisation et analyse des données du rapport..."
+              data-ar="تشفير وتحليل بيانات التقرير..."
+              data-hi="रिपोर्ट डेटा को डिजिटल और पार्स किया जा रहा है..."
+              data-te="నివేదిక డేటాను విశ్లేషిస్తోంది..."
+              data-ta="அறிக்கை தரவை டிஜிட்டல் மயமாக்குகிறது...">Digitizing and Parsing Report Data...</h3>
+          <p style="color: var(--text-secondary); font-size: 0.85rem;" 
+             data-en="Extracting biomarkers and assessing reference thresholds..." 
+             data-es="Extrayendo biomarcadores y calculando límites de referencia..."
+             data-fr="Extraction des biomarqueurs et évaluation des seuils..."
+             data-ar="استخراج المؤشرات الحيوية وتقييم الحدود المرجعية..."
+             data-hi="बायोमार्कर निकालना और संदर्भ सीमाओं का आकलन करना..."
+             data-te="బయోమార్కర్లను సంగ్రహిస్తోంది మరియు పరిమితులను అంచనా వేస్తోంది..."
+             data-ta="உயிர் குறிப்பான்களை பிரித்தெடுத்து குறிப்பு வரம்புகளை மதிப்பிடுகிறது...">Extracting biomarkers and assessing reference thresholds...</p>
+        </div>
+      </div>
+
+      <!-- Text Paste Fallback Area -->
+      <div class="samples-section">
+        <h3 class="section-subtitle" 
+            data-en="Or, paste raw report text here:" 
+            data-es="O pegue el texto del reporte aquí:"
+            data-fr="Ou, collez le texte brut du rapport ici :"
+            data-ar="أو الصق نص التقرير هنا:"
+            data-hi="या, यहाँ मूल रिपोर्ट पाठ पेस्ट करें:"
+            data-te="లేదా, నివేదిక వచనాన్ని ఇక్కడ పేస్ట్ చేయండి:"
+            data-ta="அல்லது, அறிக்கையின் உரையை இங்கே ஒட்டவும்:">Or, paste raw report text here:</h3>
+        <textarea id="raw-paste-area" class="form-control" style="min-height: 120px; font-family: monospace; background: rgba(10, 15, 26, 0.4);" placeholder="E.g., Glucose: 110 mg/dL, Total Cholesterol: 240..."></textarea>
+        <button class="btn btn-primary" onclick="analyzeRawText()" style="align-self: flex-start;" id="btn-analyze-paste" 
+                data-en="Analyze Raw Text" 
+                data-es="Analizar Texto"
+                data-fr="Analyser le Texte"
+                data-ar="تحليل النص"
+                data-hi="मूल पाठ का विश्लेषण करें"
+                data-te="వచనాన్ని విశ్లేషించండి"
+                data-ta="உரையை பகுப்பாய்வு செய்க">Analyze Raw Text</button>
+      </div>
+
+      <!-- Preset Quick Samples -->
+      <div class="samples-section">
+        <h3 class="section-subtitle" 
+            data-en="Try it with Preset Demo Reports" 
+            data-es="Pruebe con Reportes Demo Predeterminados"
+            data-fr="Tester avec des exemples de rapports"
+            data-ar="جرب مع التقارير التجريبية المحددة مسبقًا"
+            data-hi="डेमो रिपोर्ट के साथ प्रयास करें"
+            data-te="నమూనా నివేదికలతో ప్రయత్నించండి"
+            data-ta="மாதிரி அறிக்கைகளுடன் முயற்சிக்கவும்">Try it with Preset Demo Reports</h3>
+        <div class="samples-grid">
+          <!-- Sample 1 -->
+          <div class="sample-button" onclick="loadSampleReport('lipid')">
+            <span class="sample-type" data-en="Cardiovascular" data-es="Cardiovascular" data-fr="Cardiovasculaire" data-ar="أمراض القلب" data-hi="हृदय रोग" data-te="కార్డియోవాస్కులర్" data-ta="இருதய">Cardiovascular</span>
+            <span class="sample-name" data-en="Lipid / Cholesterol Panel" data-es="Panel de Colesterol (Lípidos)" data-fr="Bilan Lipidique" data-ar="فحص الدهون والكوليسترول" data-hi="लिपिड / कोलेस्ट्रॉल पैनल" data-te="లిపిడ్ / కొలెస్ట్రాల్ ప్యానెల్" data-ta="கொலஸ்ட்ரால் சுயவிவரம்">Lipid / Cholesterol Panel</span>
+          </div>
+          <!-- Sample 2 -->
+          <div class="sample-button" onclick="loadSampleReport('cmp')">
+            <span class="sample-type" data-en="Metabolic / Kidney" data-es="Metabólico / Riñón" data-fr="Métabolique / Rénal" data-ar="التمثيل الغذائي والكلى" data-hi="चयापचय / गुर्दा" data-te="జీవక్రియ / కిడ్నీ" data-ta="வளர்சிதை மாற்றம் / சிறுநீரகம்">Metabolic / Kidney</span>
+            <span class="sample-name" data-en="Metabolic Profile (CMP)" data-es="Perfil Metabólico (CMP)" data-fr="Bilan Métabolique (CMP)" data-ar="مخطط التمثيل الغذائي الشامل" data-hi="चयापचय प्रोफ़ाइल (CMP)" data-te="జీవక్రియ ప్రొఫైల్ (CMP)" data-ta="வளர்சிதை மாற்ற சுயவிவரம் (CMP)">Metabolic Profile (CMP)</span>
+          </div>
+          <!-- Sample 3 -->
+          <div class="sample-button" onclick="loadSampleReport('cbc')">
+            <span class="sample-type" data-en="Hematology" data-es="Hematología" data-fr="Hématologie" data-ar="أمراض الدم" data-hi="रक्तविज्ञान" data-te="రక్త పరీక్ష" data-ta="இரத்தவியல்">Hematology</span>
+            <span class="sample-name" data-en="Complete Blood Count (CBC)" data-es="Hemograma Completo (CBC)" data-fr="Hémogramme Complet (CBC)" data-ar="تعداد الدم الكامل (CBC)" data-hi="पूर्ण रक्त गणना (CBC)" data-te="సంపూర్ణ రక్త పరీక్ష (CBC)" data-ta="முழுமையான இரத்த அணுக்கள் எண்ணிக்கை (CBC)">Complete Blood Count (CBC)</span>
+          </div>
+          <!-- Sample 4 -->
+          <div class="sample-button" onclick="loadSampleReport('thyroid')">
+            <span class="sample-type" data-en="Hormonal / Endocrine" data-es="Hormonal / Endocrino" data-fr="Hormonal / Endocrinien" data-ar="الغدد الصماء والهرمونات" data-hi="हार्मोनल / अंतःस्रावी" data-te="హార్మోన్ల / ఎండోక్రైన్" data-ta="ஹார்மோன் / நாளமில்லா சுரப்பி">Hormonal / Endocrine</span>
+            <span class="sample-name" data-en="Thyroid Function (TSH)" data-es="Función Tiroidea (TSH)" data-fr="Bilan Thyroïdien (TSH)" data-ar="وظائف الغدة الدرقية (TSH)" data-hi="थायरॉयड कार्यप्रणाली (TSH)" data-te="థైరాయిడ్ ఫంక్షన్ (TSH)" data-ta="தைராய்டு செயல்பாடு (TSH)">Thyroid Function (TSH)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN C: REPORT RESULTS VIEW -->
+    <section id="screen-results" class="app-screen">
+      <!-- Title Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-secondary" onclick="switchScreen('analyzer')" id="btn-back-analyzer">
+          <i class="fa-solid fa-arrow-left"></i> 
+          <span data-en="Back to Analyzer" 
+                data-es="Volver al Analizador" 
+                data-fr="Retour à l'analyseur" 
+                data-ar="العودة للمحلل" 
+                data-hi="विश्लेषक पर वापस जाएँ" 
+                data-te="తిరిగి విశ్లేషకానికి వెళ్లండి" 
+                data-ta="மீண்டும் பகுப்பாய்விக்கு">Back to Analyzer</span>
+        </button>
+        <div class="actions-bar">
+          <button class="btn btn-primary" onclick="saveReportToProfile()" id="btn-save-report">
+            <i class="fa-solid fa-bookmark"></i> 
+            <span data-en="Save to Active Profile" 
+                  data-es="Guardar en Perfil Activo" 
+                  data-fr="Enregistrer au profil" 
+                  data-ar="حفظ في الملف النشط" 
+                  data-hi="सक्रिय प्रोफ़ाइल में सहेजें" 
+                  data-te="కార్యాచరణ ప్రొఫైల్‌కు సేవ్ చేయండి" 
+                  data-ta="செயலில் உள்ள சுயவிவரத்தில் சேமிக்கவும்">Save to Active Profile</span>
+          </button>
+          <button class="btn btn-secondary" onclick="openShareModal()" id="btn-share-report">
+            <i class="fa-solid fa-paper-plane"></i> 
+            <span data-en="Share with Doctor" 
+                  data-es="Compartir con Médico" 
+                  data-fr="Partager avec le médecin" 
+                  data-ar="مشاركة مع الطبيب" 
+                  data-hi="डॉक्टर के साथ साझा करें" 
+                  data-te="వైద్యుడితో పంచుకోండి" 
+                  data-ta="மருத்துவருடன் பகிரவும்">Share with Doctor</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Analysis Results View Grid -->
+      <div class="analysis-layout">
+        <!-- Lab Table column -->
+        <div class="analysis-results-card">
+          <div class="analysis-header">
+            <div>
+              <h2 id="result-title" style="font-size: 1.5rem; font-weight: 800;">Report Title</h2>
+              <p id="result-date" style="color: var(--text-secondary); font-size: 0.85rem;">Date</p>
+            </div>
+            <div class="analysis-score-indicator">
+              <div class="score-circle">
+                <span class="score-text" id="result-score">80</span>
+              </div>
+              <div class="analysis-status-badge borderline" id="result-status-badge">Borderline</div>
+            </div>
+          </div>
+
+          <!-- Dynamic medical text analysis -->
+          <div class="widget-card" style="background: rgba(10, 15, 26, 0.4); border-color: var(--card-border);">
+            <div style="display: flex; gap: 0.8rem; align-items: flex-start;">
+              <span style="font-size: 1.2rem; color: var(--primary);"><i class="fa-solid fa-clipboard-question"></i></span>
+              <p id="result-summary" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);"></p>
+            </div>
+          </div>
+
+          <!-- Lab values table -->
+          <div class="lab-table-container">
+            <table class="lab-table">
+              <thead>
+                <tr>
+                  <th data-en="Biomarker" data-es="Biomarcador" data-fr="Biomarqueur" data-ar="المؤشر الحيوي" data-hi="बायोमार्कर" data-te="బయోమార్కర్" data-ta="உயிர் குறிப்பான்">Biomarker</th>
+                  <th data-en="Patient Value" data-es="Su Valor" data-fr="Valeur Patient" data-ar="قيمة المريض" data-hi="रोगी मूल्य" data-te="రోగి విలువ" data-ta="நோயாளி மதிப்பு">Patient Value</th>
+                  <th data-en="Reference Range" data-es="Límites Normales" data-fr="Ligne Directrice" data-ar="المعدل الطبيعي" data-hi="संदर्भ सीमा" data-te="సాధారణ పరిధి" data-ta="குறிப்பு வரம்பு">Reference Range</th>
+                  <th data-en="Status" data-es="Estado" data-fr="Statut" data-ar="الحالة" data-hi="स्थिति" data-te="స్థితి" data-ta="நிலை">Status</th>
+                  <th data-en="Visual Distribution" data-es="Gráfico de Rango" data-fr="Distribution Visuelle" data-ar="التوزيع البصري" data-hi="दृश्य वितरण" data-te="గ్రాఫికల్ ప్రాతినిధ్యం" data-ta="வரைபட விநியோகம்">Visual Distribution</th>
+                </tr>
+              </thead>
+              <tbody id="lab-table-body">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right action plan checklist column -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          
+          <!-- Habits / Action Plan Checklist -->
+          <div class="habits-card">
+            <h2 class="section-subtitle" 
+                data-en="Action Habits Checklist" 
+                data-es="Lista de Hábitos de Acción" 
+                data-fr="Habitudes d'Action" 
+                data-ar="قائمة عادات العمل" 
+                data-hi="कार्य आदतों की सूची" 
+                data-te="కార్యచరణ అలవాట్ల జాబితా" 
+                data-ta="செயல் பழக்கவழக்கங்கள் பட்டியல்">Action Habits Checklist</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: -0.4rem;" 
+               data-en="Complete these daily tasks to improve your biological values." 
+               data-es="Complete estas tareas diariamente para mejorar sus valores biológicos."
+               data-fr="Effectuez ces tâches quotidiennes pour améliorer votre santé."
+               data-ar="أكمل هذه المهام اليومية لتحسين مؤشراتك الحيوية."
+               data-hi="अपने जैविक मूल्यों में सुधार के लिए इन दैनिक कार्यों को पूरा करें।"
+               data-te="మీ ఆరోగ్య విలువలను మెరుగుపరచడానికి ఈ రోజువారీ పనులను పూర్తి చేయండి."
+               data-ta="உங்கள் உயிரியல் அளவுகளை மேம்படுத்த இந்த தினசரி பணிகளை முடிக்கவும்.">Complete these daily tasks to improve your biological values.</p>
+            <div class="habits-list" id="habits-list-body">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Questions for Doctor Card -->
+          <div class="habits-card" style="background: linear-gradient(180deg, var(--card-bg) 0%, rgba(99, 102, 241, 0.03) 100%);">
+            <h2 class="section-subtitle" 
+                data-en="Prepare for Doctor Visit" 
+                data-es="Prepare su Consulta Médica" 
+                data-fr="Préparer la visite chez le médecin" 
+                data-ar="التحضير لزيارة الطبيب" 
+                data-hi="डॉक्टर से परामर्श की तैयारी करें" 
+                data-te="వైద్యుడి సంప్రదింపులకు సిద్ధం అవ్వండి" 
+                data-ta="மருத்துவர் சந்திப்பிற்கு தயாராகுங்கள்">Prepare for Doctor Visit</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: -0.4rem;" 
+               data-en="Ask your medical provider these personalized questions:" 
+               data-es="Consulte a su médico estas preguntas sugeridas:"
+               data-fr="Posez ces questions personnalisées à votre médecin :"
+               data-ar="اطرح على طبيبك هذه الأسئلة المخصصة:"
+               data-hi="अपने चिकित्सा प्रदाता से ये व्यक्तिगत प्रश्न पूछें:"
+               data-te="మీ వైద్యుడిని ఈ క్రింది వ్యక్తిగతీకరించిన ప్రశ్నలను అడగండి:"
+               data-ta="உங்கள் மருத்துவரிடம் இந்த தனிப்பயனாக்கப்பட்ட கேள்விகளைக் கேளுங்கள்:">Ask your medical provider these personalized questions:</p>
+            <div id="questions-list-body" style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 0.5rem;">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN D: HEALTH TRENDS -->
+    <section id="screen-trends" class="app-screen">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="welcome-title">
+          <h2 class="section-subtitle" 
+              data-en="Biomarker Trend Tracker" 
+              data-es="Monitoreo Histórico de Valores" 
+              data-fr="Suivi des Biomarqueurs" 
+              data-ar="متابع اتجاهات المؤشرات الحيوية" 
+              data-hi="बायोमार्कर ट्रेंड ट्रैकर" 
+              data-te="బయోమార్కర్ ట్రెండ్ ట్రాకర్" 
+              data-ta="உயிர் குறிப்பான் போக்கு கண்காணிப்பாளர்">Biomarker Trend Tracker</h2>
+          <p style="color: var(--text-secondary);" 
+             data-en="Graph and logs tracking biological progress over time." 
+             data-es="Gráfico histórico de progreso biológico acumulado en el perfil activo."
+             data-fr="Graphiques et historique de votre évolution biologique."
+             data-ar="رسومات وسجلات تتبع التقدم البيولوجي بمرور الوقت."
+             data-hi="समय के साथ जैविक प्रगति पर नज़र रखने वाले ग्राफ़ और लॉग।"
+             data-te="కాలక్రమేణా మీ ఆరోగ్య ప్రగతిని చూపించే గ్రాఫ్."
+             ve-ta="காலப்போக்கில் உயிரியல் முன்னேற்றத்தைக் கண்காணிக்கும் வரைபடம்.">Graph and logs tracking biological progress over time.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openLogMetricModal()" id="btn-log-metric">
+          <i class="fa-solid fa-plus"></i> 
+          <span data-en="Log Test Manually" 
+                data-es="Registrar Valor Manualmente" 
+                data-fr="Enregistrer manuellement" 
+                data-ar="تسجيل فحص يدويًا" 
+                data-hi="मैन्युअल रूप से परीक्षण दर्ज करें" 
+                data-te="విలువను మాన్యువల్‌గా నమోదు చేయండి" 
+                data-ta="கைமுறையாக மதிப்பை பதிவு செய்யவும்">Log Test Manually</span>
+        </button>
+      </div>
+
+      <!-- Trends Grid -->
+      <div class="trends-layout">
+        <!-- Interactive Chart Card -->
+        <div class="chart-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 class="section-subtitle" id="chart-title-text" 
+                data-en="Select Metric to Graph" 
+                data-es="Seleccione Métrica para Graficar" 
+                data-fr="Sélectionner la métrique à tracer" 
+                data-ar="اختر مؤشرًا لرسم البياني" 
+                data-hi="ग्राफ़ के लिए मीट्रिक चुनें" 
+                data-te="గ్రాఫ్ కోసం విలువను ఎంచుకోండి" 
+                data-ta="வரைபடத்திற்கான அளவீட்டைத் தேர்ந்தெடுக்கவும்">Glucose Levels Trend</h3>
+            <!-- Chart selector dropdown -->
+            <div class="select-wrapper">
+              <select id="chart-metric-selector" class="profile-select" onchange="renderTrendsChart(this.value)">
+                <option value="Glucose">Glucose</option>
+                <option value="Total Cholesterol">Total Cholesterol</option>
+                <option value="LDL Cholesterol">LDL Cholesterol</option>
+                <option value="TSH">TSH (Thyroid)</option>
+                <option value="Hemoglobin">Hemoglobin</option>
+              </select>
+            </div>
+          </div>
+          <!-- Canvas for ChartJS -->
+          <div style="position: relative; width: 100%; height: 320px;">
+            <canvas id="trends-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Logs list sidebar -->
+        <div class="logs-card">
+          <h3 class="section-subtitle" 
+              data-en="Parsed History logs" 
+              data-es="Historial de Mediciones" 
+              data-fr="Historique des mesures" 
+              data-ar="سجلات القياسات المحللة" 
+              data-hi="विश्लेषण किए गए इतिहास लॉग" 
+              data-te="నమోదైన విశ్లేషణల చరిత్ర" 
+              data-ta="பகுப்பாய்வு செய்யப்பட்ட வரலாற்று பதிவுகள்">Parsed History logs</h3>
+          <div class="logs-list" id="trends-logs-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN E: PATIENT PROFILES -->
+    <section id="screen-profiles" class="app-screen">
+      <div class="welcome-title">
+        <h2 class="section-subtitle" 
+            data-en="Profiles Database" 
+            data-es="Base de Datos de Perfiles" 
+            data-fr="Base de données des profils" 
+            data-ar="قاعدة بيانات ملفات التعريف" 
+            data-hi="प्रोफाइल डेटाबेस" 
+            data-te="ప్రొఫైల్స్ డేటాబేస్" 
+            data-ta="சுயவிவரங்களின் தரவுத்தளம்">Profiles Database</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;" 
+           data-en="Manage distinct diagnostic archives for different individuals." 
+           data-es="Administre registros clínicos e historiales independientes para sus familiares."
+           data-fr="Gérez les archives de diagnostic pour différents individus."
+           data-ar="إدارة أرشيفات التشخيص المتميزة لأفراد مختلفين."
+           data-hi="विभिन्न व्यक्तियों के लिए अलग-अलग नैदानिक अभिलेखागार प्रबंधित करें।"
+           data-te="వివిధ వ్యక్తుల కోసం ప్రత్యేక ఆరోగ్య రికార్డులను నిర్వహించండి."
+           data-ta="வெவ்வேறு நபர்களுக்கான தனித்துவமான மருத்துவப் பதிவுகளை நிர்வகிக்கவும்.">Manage distinct diagnostic archives for different individuals.</p>
+      </div>
+
+      <!-- Grid of Profiles -->
+      <div class="profiles-grid" id="profiles-list-container">
+        <!-- Rendered by JS -->
+        <!-- Add Profile Dotted Button Card -->
+        <div class="profile-card add-profile-card" onclick="openCreateProfileModal()" id="btn-add-new-profile">
+          <div class="add-profile-icon"><i class="fa-solid fa-user-plus"></i></div>
+          <span style="font-weight: 700; color: var(--text-muted);" 
+                data-en="Add Family Member" 
+                data-es="Añadir Familiar" 
+                data-fr="Ajouter un membre de famille" 
+                data-ar="إضافة فرد من العائلة" 
+                data-hi="परिवार का सदस्य जोड़ें" 
+                data-te="కుటుంబ సభ్యుడిని చేర్చండి" 
+                data-ta="குடும்ப உறுப்பினரைச் சேர்க்கவும்">Add Family Member</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN F: AI CONSULTATION CHAT -->
+    <section id="screen-chat" class="app-screen">
+      <div class="welcome-title">
+        <h2 class="section-subtitle" 
+            data-en="Medical AI Consultant" 
+            data-es="Consultor Médico AI" 
+            data-fr="Consultant médical IA" 
+            data-ar="مستشار طبي ذكي" 
+            data-hi="चिकित्सा एआई सलाहकार" 
+            data-te="మెడికల్ AI కన్సల్టెంట్" 
+            data-ta="மருத்துவ AI ஆலோசகர்">Medical AI Consultant</h2>
+        <p style="color: var(--text-secondary);" 
+           data-en="Ask virtual assistance questions about your lab metrics or reports." 
+           data-es="Formule preguntas a nuestro asistente virtual acerca de sus métricas y reportes."
+           data-fr="Posez des questions à notre assistant virtuel concernant vos résultats."
+           data-ar="اطرح أسئلة على المساعد الافتراضي حول تقاريرك ومؤشراتك الحيوية."
+           data-hi="अपने प्रयोगशाला मेट्रिक्स या रिपोर्ट के बारे में आभासी सहायता से प्रश्न पूछें।"
+           data-te="మీ ల్యాబ్ నివేదికలపై మా వర్చువల్ అసిస్టెంట్‌ని ప్రశ్నలు అడగండి."
+           data-ta="உங்கள் ஆய்வக அளவீடுகள் அல்லது அறிக்கைகள் பற்றி மெய்நிகர் உதவியாளரிடம் கேள்விகளைக் கேளுங்கள்.">Ask virtual assistance questions about your lab metrics or reports.</p>
+      </div>
+
+      <!-- Chat panel -->
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div>
+            <div class="chat-title" 
+                 data-en="MedBridge AI Companion" 
+                 data-es="Compañero MedBridge AI" 
+                 data-fr="Compagnon MedBridge IA" 
+                 data-ar="مساعدك الذكي من MedBridge" 
+                 data-hi="MedBridge एआई साथी" 
+                 data-te="MedBridge AI సహాయకుడు" 
+                 data-ta="MedBridge AI தோழன்">MedBridge AI Companion</div>
+            <div style="font-size: 0.75rem; color: var(--normal); display: flex; align-items: center; gap: 0.3rem;">
+              <span style="display:inline-block; width:6px; height:6px; background:var(--normal); border-radius:50%;"></span>
+              <span data-en="Virtual Healthcare Assistant" 
+                    data-es="Asistente de Salud Virtual" 
+                    data-fr="Assistant virtuel de santé" 
+                    data-ar="مساعد الرعاية الصحية الافتراضي" 
+                    data-hi="आभासी स्वास्थ्य सेवा सहायक" 
+                    data-te="వర్చువల్ హెల్త్‌కేర్ అసిస్టెంట్" 
+                    data-ta="மெய்நிகர் சுகாதார உதவியாளர்">Virtual Healthcare Assistant</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages-container">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="chat-input-area">
+          <input type="text" id="chat-user-input" class="chat-input" placeholder="Type your health question..." onkeydown="handleChatKeyPress(event)">
+          <button class="btn btn-primary" onclick="sendChatMessage()" id="btn-chat-send">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Medical Warning Disclaimer -->
+    <footer class="disclaimer-banner">
+      <div class="disclaimer-icon"><i class="fa-solid fa-circle-info"></i></div>
+      <div class="disclaimer-text" 
+           data-en="Disclaimer: MedBridge AI is designed strictly for informational and educational support. This system does not deliver diagnoses, treatments, or prescriptions. Always cross-reference AI recommendations and lab thresholds with a licensed physician or doctor." 
+           data-es="Descargo de responsabilidad: MedBridge AI está diseñado estrictamente para soporte informativo y educativo. Este sistema no ofrece diagnósticos, tratamientos ni prescripciones. Siempre valide las recomendaciones del software y los límites de laboratorio con un médico licenciado."
+           data-fr="Clause de non-responsabilité : MedBridge AI est conçu uniquement pour le soutien informatif et éducatif. Il ne remplace pas l'avis d'un médecin."
+           data-ar="تنبيه: تم تصميم MedBridge AI للدعم التعليمي والمعلوماتي فقط. هذا النظام لا يقدم تشخيصات أو علاجات طبية. استشر طبيبك دائمًا."
+           data-hi="अस्वीकरण: MedBridge AI को केवल सूचनात्मक और शैक्षिक सहायता के लिए डिज़ाइन किया गया है। यह निदान या उपचार प्रदान नहीं करता है। हमेशा डॉक्टर से परामर्श लें।"
+           data-te="గమనిక: MedBridge AI కేవలం సమాచారం మరియు విద్యాపరమైన మద్దతు కోసం మాత్రమే రూపొందించబడింది. ఇది వైద్య చికిత్స లేదా రోగ నిర్ధారణను అందించదు. ఎల్లప్పుడూ వైద్యుడిని సంప్రదించండి."
+           data-ta="பொறுப்புத்துறப்பு: MedBridge AI தகவல் மற்றும் கல்வி நோக்கங்களுக்காக மட்டுமே வடிவமைக்கப்பட்டுள்ளது. இது மருத்துவ சிகிச்சை அல்லது நோய் கண்டறிதலை வழங்காது. எப்போதும் மருத்துவரை அணுகவும்.">
+        Disclaimer: MedBridge AI is designed strictly for informational and educational support. This system does not deliver diagnoses, treatments, or prescriptions. Always cross-reference AI recommendations and lab thresholds with a licensed physician or doctor.
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Modal A: Add Profile -->
+  <div class="modal-backdrop" id="modal-add-profile">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" data-en="Add Patient Profile" data-es="Añadir Perfil de Paciente" data-fr="Ajouter un Profil" data-ar="إضافة ملف مريض" data-hi="रोगी प्रोफ़ाइल जोड़ें" data-te="రోగి ప్రొఫైల్‌ను చేర్చండి" data-ta="நோயாளி சுயவிவரத்தைச் சேர்க்கவும்">Add Patient Profile</h3>
+        <button class="close-modal-btn" onclick="closeModal('modal-add-profile')">&times;</button>
+      </div>
+      <form id="form-create-profile" onsubmit="handleCreateProfile(event)" class="auth-form">
+        <div class="form-group">
+          <label for="new-profile-name" data-en="Profile Name / Relationship" data-es="Nombre del Perfil / Relación" data-fr="Relation" data-ar="اسم الملف / العلاقة" data-hi="प्रोफ़ाइल नाम / संबंध" data-te="ప్రొఫైల్ పేరు / సంబంధం" data-ta="சுயவிவர பெயர் / உறவு">Profile Name / Relationship</label>
+          <input type="text" id="new-profile-name" class="form-control" placeholder="E.g., Spouse, Mom, Son..." required>
+        </div>
+        <div class="auth-row">
+          <div class="form-group">
+            <label for="new-profile-age" data-en="Age" data-es="Edad" data-fr="Âge" data-ar="العمر" data-hi="उम्र" data-te="వయస్సు" data-ta="வயது">Age</label>
+            <input type="number" id="new-profile-age" class="form-control" required min="1" max="120">
+          </div>
+          <div class="form-group">
+            <label for="new-profile-gender" data-en="Gender" data-es="Género" data-fr="Genre" data-ar="الجنس" data-hi="लिंग" data-te="లింగము" data-ta="பாலினம்">Gender</label>
+            <select id="new-profile-gender" class="form-control" style="background:#0a0f1a;">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="new-profile-blood" data-en="Blood Type" data-es="Grupo Sanguíneo" data-fr="Groupe Sanguin" data-ar="فصيلة الدم" data-hi="रक्त समूह" data-te="రక్త గ్రూపు" data-ta="இரத்த வகை">Blood Type</label>
+          <input type="text" id="new-profile-blood" class="form-control" placeholder="E.g., A+, AB-">
+        </div>
+        <button type="submit" class="auth-btn" data-en="Create Profile" data-es="Crear Perfil" data-fr="Créer le Profil" data-ar="إنشاء الملف" data-hi="प्रोफ़ाइल बनाएं" data-te="ప్రొఫైల్‌ను సృష్టించండి" data-ta="சுயவிவரத்தை உருவாக்கவும்">Create Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal B: Manual Lab Entry -->
+  <div class="modal-backdrop" id="modal-log-metric">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" data-en="Log Test Value Manually" data-es="Registrar Valor de Examen" data-fr="Enregistrer manuellement" data-ar="تسجيل قيمة يدويًا" data-hi="मैन्युअल रूप से मान दर्ज करें" data-te="విలువను మాన్యువల్‌గా నమోదు చేయండి" data-ta="கைமுறையாக மதிப்பை பதிவு செய்யவும்">Log Test Value Manually</h3>
+        <button class="close-modal-btn" onclick="closeModal('modal-log-metric')">&times;</button>
+      </div>
+      <form id="form-log-metric" onsubmit="handleLogMetric(event)" class="auth-form">
+        <div class="form-group">
+          <label for="log-metric-name" data-en="Biomarker" data-es="Biomarcador" data-fr="Biomarqueur" data-ar="المؤشر الحيوي" data-hi="बायोमार्कर" data-te="బయోమార్కర్" data-ta="உயிர் குறிப்பான்">Biomarker</label>
+          <select id="log-metric-name" class="form-control" style="background:#0a0f1a;">
+            <option value="Glucose">Glucose (mg/dL)</option>
+            <option value="Total Cholesterol">Total Cholesterol (mg/dL)</option>
+            <option value="LDL Cholesterol">LDL Cholesterol (mg/dL)</option>
+            <option value="TSH">TSH (Thyroid) (uIU/mL)</option>
+            <option value="Hemoglobin">Hemoglobin (g/dL)</option>
+          </select>
+        </div>
+        <div class="auth-row">
+          <div class="form-group">
+            <label for="log-metric-val" data-en="Measured Value" data-es="Valor Medido" data-fr="Valeur mesurée" data-ar="القيمة المقاسة" data-hi="मापा गया मान" data-te="కొలిచిన విలువ" data-ta="அளவிடப்பட்ட மதிப்பு">Measured Value</label>
+            <input type="number" id="log-metric-val" class="form-control" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label for="log-metric-date" data-en="Measurement Date" data-es="Fecha de Medición" data-fr="Date de mesure" data-ar="تاريخ القياس" data-hi="माप तिथि" data-te="కొలిచిన తేదీ" data-ta="அளவிடப்பட்ட தேதி">Measurement Date</label>
+            <input type="date" id="log-metric-date" class="form-control" required>
+          </div>
+        </div>
+        <button type="submit" class="auth-btn" data-en="Log Data Entry" data-es="Registrar Datos" data-fr="Enregistrer les Données" data-ar="تسجيل البيانات" data-hi="डेटा दर्ज करें" data-te="డేటాను నమోదు చేయండి" data-ta="தரவை சேமிக்கவும்">Log Data Entry</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal C: Share with Doctor Exporter -->
+  <div class="modal-backdrop" id="modal-share-report">
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 class="modal-title" data-en="Share with Doctor" data-es="Compartir con Médico" data-fr="Partager avec le médecin" data-ar="مشاركة مع الطبيب" data-hi="डॉक्टर के साथ साझा करें" data-te="వైద్యుడితో పంచుకోండి" data-ta="மருத்துவருடன் பகிரவும்">Share with Doctor</h3>
+        <button class="close-modal-btn" onclick="closeModal('modal-share-report')">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);" 
+         data-en="Copy the pre-formatted report summary below to send in an email, or print it out." 
+         data-es="Copie el resumen a continuación para enviarlo por correo o imprimirlo."
+         data-fr="Copiez le résumé du rapport ci-dessous pour l'envoyer par e-mail ou l'imprimer."
+         data-ar="انسخ ملخص التقرير المنسق أدناه لإرساله في بريد إلكتروني، أو طباعته."
+         data-hi="ईमेल में भेजने या प्रिंट करने के लिए नीचे दिए गए प्रारूपित रिपोर्ट सारांश को कॉपी करें।"
+         data-te="ఈ నివేదిక సారాంశాన్ని కాపీ చేసి ఈమెయిల్‌లో పంపవచ్చు లేదా ప్రింట్ చేయవచ్చు."
+         data-ta="மின்னஞ்சலில் அனுப்ப அல்லது அச்சிட கீழே உள்ள அறிக்கையின் சுருக்கத்தை நகலெடுக்கவும்.">Copy the pre-formatted report summary below to send in an email, or print it out.</p>
+      
+      <div class="form-group">
+        <label data-en="Email Template Body" data-es="Cuerpo del Mensaje" data-fr="Corps du message" data-ar="نص الرسالة" data-hi="ईमेल संदेश" data-te="ఈమెయిల్ సందేశం" data-ta="மின்னஞ்சல் செய்தி">Email Template Body</label>
+        <pre class="email-draft-pre" id="share-email-body"></pre>
+      </div>
+      
+      <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-primary" onclick="copyShareText()" style="flex-grow: 1;" id="btn-copy-share">
+          <i class="fa-solid fa-copy"></i> 
+          <span data-en="Copy to Clipboard" 
+                data-es="Copiar al Portapapeles" 
+                data-fr="Copier le texte" 
+                data-ar="نسخ للحافظة" 
+                data-hi="क्लिपबोर्ड पर कॉपी करें" 
+                data-te="క్లిప్‌బోర్డ్‌కు కాపీ చేయండి" 
+                data-ta="நகலெடுக்கவும்">Copy to Clipboard</span>
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()" id="btn-print-share">
+          <i class="fa-solid fa-print"></i> 
+          <span data-en="Print Page" 
+                data-es="Imprimir" 
+                data-fr="Imprimer la page" 
+                data-ar="طباعة الصفحة" 
+                data-hi="पृष्ठ प्रिंट करें" 
+                data-te="ప్రింట్ చేయండి" 
+                data-ta="அச்சிடுக">Print Page</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Controllers -->
+  <script src="sample_reports.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
